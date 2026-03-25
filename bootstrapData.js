@@ -1,13 +1,6 @@
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-
-dotenv.config();
-
 const User = require('./models/User');
 const Room = require('./models/Room');
 const Booking = require('./models/Booking');
-
-const shouldReset = process.argv.includes('--reset');
 
 const rooms = [
   {
@@ -19,9 +12,13 @@ const rooms = [
       'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800',
       'https://images.unsplash.com/photo-1631049421450-348ccd8f8b5b?w=800'
     ],
-    capacity: 1, size: 22, floor: 2,
+    capacity: 1,
+    size: 22,
+    floor: 2,
     amenities: ['Free WiFi', 'Air Conditioning', 'Flat-screen TV', 'Mini Fridge', 'Room Service', 'Safe'],
-    isAvailable: true, rating: 4.2, totalReviews: 8
+    isAvailable: true,
+    rating: 4.2,
+    totalReviews: 8
   },
   {
     name: 'Superior Double Room',
@@ -32,9 +29,13 @@ const rooms = [
       'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800',
       'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800'
     ],
-    capacity: 2, size: 35, floor: 3,
+    capacity: 2,
+    size: 35,
+    floor: 3,
     amenities: ['Free WiFi', 'Air Conditioning', 'Smart TV', 'Minibar', 'Balcony', 'Bathtub', 'Room Service'],
-    isAvailable: true, rating: 4.5, totalReviews: 15
+    isAvailable: true,
+    rating: 4.5,
+    totalReviews: 15
   },
   {
     name: 'Deluxe Ocean View',
@@ -45,9 +46,13 @@ const rooms = [
       'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800',
       'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800'
     ],
-    capacity: 3, size: 48, floor: 5,
+    capacity: 3,
+    size: 48,
+    floor: 5,
     amenities: ['Free WiFi', 'Air Conditioning', '4K Smart TV', 'Minibar', 'Ocean View', 'Rainfall Shower', 'Butler Service', 'Bathtub'],
-    isAvailable: true, rating: 4.7, totalReviews: 22
+    isAvailable: true,
+    rating: 4.7,
+    totalReviews: 22
   },
   {
     name: 'Presidential Suite',
@@ -58,9 +63,13 @@ const rooms = [
       'https://images.unsplash.com/photo-1631049421450-348ccd8f8b5b?w=800',
       'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800'
     ],
-    capacity: 6, size: 180, floor: 10,
+    capacity: 6,
+    size: 180,
+    floor: 10,
     amenities: ['Free WiFi', 'Private Pool', 'Butler Service', 'Kitchen', 'Dining Room', 'Home Theater', 'Jacuzzi', 'Gym Access', 'Airport Transfer'],
-    isAvailable: true, rating: 4.9, totalReviews: 7
+    isAvailable: true,
+    rating: 4.9,
+    totalReviews: 7
   },
   {
     name: 'Garden View Double',
@@ -71,9 +80,13 @@ const rooms = [
       'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800',
       'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800'
     ],
-    capacity: 2, size: 32, floor: 1,
+    capacity: 2,
+    size: 32,
+    floor: 1,
     amenities: ['Free WiFi', 'Air Conditioning', 'TV', 'Garden View', 'Minibar', 'Room Service'],
-    isAvailable: true, rating: 4.3, totalReviews: 11
+    isAvailable: true,
+    rating: 4.3,
+    totalReviews: 11
   },
   {
     name: 'Luxury Suite with Terrace',
@@ -84,9 +97,13 @@ const rooms = [
       'https://images.unsplash.com/photo-1540518614846-7eded433c457?w=800',
       'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800'
     ],
-    capacity: 4, size: 95, floor: 7,
+    capacity: 4,
+    size: 95,
+    floor: 7,
     amenities: ['Free WiFi', 'Private Terrace', 'Living Room', 'Kitchenette', 'Jacuzzi', 'Butler Service', '4K TV', 'Premium Minibar'],
-    isAvailable: true, rating: 4.8, totalReviews: 14
+    isAvailable: true,
+    rating: 4.8,
+    totalReviews: 14
   },
   {
     name: 'Executive Single',
@@ -97,9 +114,13 @@ const rooms = [
       'https://images.unsplash.com/photo-1631049421450-348ccd8f8b5b?w=800',
       'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800'
     ],
-    capacity: 1, size: 26, floor: 4,
+    capacity: 1,
+    size: 26,
+    floor: 4,
     amenities: ['Free WiFi', 'Work Desk', 'Air Conditioning', 'Smart TV', 'Coffee Machine', 'Safe', 'Iron'],
-    isAvailable: true, rating: 4.4, totalReviews: 9
+    isAvailable: true,
+    rating: 4.4,
+    totalReviews: 9
   },
   {
     name: 'Honeymoon Deluxe',
@@ -110,137 +131,107 @@ const rooms = [
       'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800',
       'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800'
     ],
-    capacity: 2, size: 55, floor: 6,
+    capacity: 2,
+    size: 55,
+    floor: 6,
     amenities: ['Free WiFi', 'Champagne Welcome', 'Jacuzzi', 'Ocean View', 'Canopy Bed', 'Butler Service', 'Romantic Setup', 'Bathrobe & Slippers'],
-    isAvailable: true, rating: 4.9, totalReviews: 18
+    isAvailable: true,
+    rating: 4.9,
+    totalReviews: 18
   }
 ];
 
 async function ensureUser(userData) {
   const existingUser = await User.findOne({ email: userData.email });
-
   if (existingUser) {
-    return { user: existingUser, created: false };
+    return existingUser;
   }
 
-  const user = await User.create(userData);
-  return { user, created: true };
+  return User.create(userData);
 }
 
 async function ensureRoom(roomData) {
   const existingRoom = await Room.findOne({ name: roomData.name });
-
   if (existingRoom) {
-    return { room: existingRoom, created: false };
+    return existingRoom;
   }
 
-  const room = await Room.create(roomData);
-  return { room, created: true };
+  return Room.create(roomData);
 }
 
 async function ensureBooking(bookingData) {
   const existingBooking = await Booking.findOne({ specialRequests: bookingData.specialRequests });
-
   if (existingBooking) {
-    return { booking: existingBooking, created: false };
+    return existingBooking;
   }
 
-  const booking = await Booking.create(bookingData);
-  return { booking, created: true };
+  return Booking.create(bookingData);
 }
 
-async function seed() {
-  try {
-    if (!process.env.MONGO_URI) {
-      throw new Error('Missing MONGO_URI');
-    }
+async function bootstrapData() {
+  const adminUser = await ensureUser({
+    name: 'Admin User',
+    email: 'admin@hotel.com',
+    password: 'admin123',
+    role: 'admin',
+    phone: '+1 555-0000'
+  });
 
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log('Connected to MongoDB');
+  const demoUser = await ensureUser({
+    name: 'John Doe',
+    email: 'user@hotel.com',
+    password: 'user123',
+    role: 'user',
+    phone: '+1 555-1234'
+  });
 
-    if (shouldReset) {
-      await Booking.deleteMany({});
-      await Room.deleteMany({});
-      await User.deleteMany({});
-      console.log('Reset existing users, rooms, and bookings');
-    } else {
-      console.log('Safe seed mode enabled. Existing records will be preserved.');
-    }
-
-    const adminResult = await ensureUser({
-      name: 'Admin User',
-      email: 'admin@hotel.com',
-      password: 'admin123',
-      role: 'admin',
-      phone: '+1 555-0000'
-    });
-
-    const userResult = await ensureUser({
-      name: 'John Doe',
-      email: 'user@hotel.com',
-      password: 'user123',
-      role: 'user',
-      phone: '+1 555-1234'
-    });
-
-    console.log(`Users ready. Created: ${Number(adminResult.created) + Number(userResult.created)}`);
-
-    const roomResults = await Promise.all(rooms.map(ensureRoom));
-    const createdRooms = roomResults.map(result => result.room);
-    const createdRoomCount = roomResults.filter(result => result.created).length;
-    console.log(`Rooms ready. Created: ${createdRoomCount}`);
-
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-
-    const lastMonth = new Date();
-    lastMonth.setDate(lastMonth.getDate() - 30);
-
-    const lastMonthEnd = new Date();
-    lastMonthEnd.setDate(lastMonthEnd.getDate() - 25);
-
-    const bookingResults = await Promise.all([
-      ensureBooking({
-        user: userResult.user._id,
-        room: createdRooms[0]._id,
-        checkIn: lastMonth,
-        checkOut: lastMonthEnd,
-        guests: { adults: 1, children: 0 },
-        totalNights: 5,
-        pricePerNight: 89,
-        totalAmount: 445,
-        status: 'completed',
-        paymentStatus: 'paid',
-        specialRequests: 'seed-demo-booking-completed'
-      }),
-      ensureBooking({
-        user: userResult.user._id,
-        room: createdRooms[2]._id,
-        checkIn: nextWeek,
-        checkOut: new Date(nextWeek.getTime() + 3 * 86400000),
-        guests: { adults: 2, children: 0 },
-        totalNights: 3,
-        pricePerNight: 249,
-        totalAmount: 747,
-        status: 'confirmed',
-        paymentStatus: 'paid',
-        specialRequests: 'seed-demo-booking-upcoming'
-      })
-    ]);
-
-    const createdBookingCount = bookingResults.filter(result => result.created).length;
-    console.log(`Bookings ready. Created: ${createdBookingCount}`);
-
-    console.log('\nSeed complete.\n');
-    console.log('Admin: admin@hotel.com | Password: admin123');
-    console.log('User:  user@hotel.com  | Password: user123');
-    console.log(`Mode: ${shouldReset ? 'reset' : 'safe'}`);
-  } catch (err) {
-    console.error('Seed error:', err.message);
-    process.exitCode = 1;
-  } finally {
-    await mongoose.connection.close();
+  const roomDocs = [];
+  for (const room of rooms) {
+    roomDocs.push(await ensureRoom(room));
   }
+
+  const nextWeek = new Date();
+  nextWeek.setDate(nextWeek.getDate() + 7);
+
+  const lastMonth = new Date();
+  lastMonth.setDate(lastMonth.getDate() - 30);
+
+  const lastMonthEnd = new Date();
+  lastMonthEnd.setDate(lastMonthEnd.getDate() - 25);
+
+  await ensureBooking({
+    user: demoUser._id,
+    room: roomDocs[0]._id,
+    checkIn: lastMonth,
+    checkOut: lastMonthEnd,
+    guests: { adults: 1, children: 0 },
+    totalNights: 5,
+    pricePerNight: 89,
+    totalAmount: 445,
+    status: 'completed',
+    paymentStatus: 'paid',
+    specialRequests: 'bootstrap-demo-booking-completed'
+  });
+
+  await ensureBooking({
+    user: demoUser._id,
+    room: roomDocs[2]._id,
+    checkIn: nextWeek,
+    checkOut: new Date(nextWeek.getTime() + 3 * 86400000),
+    guests: { adults: 2, children: 0 },
+    totalNights: 3,
+    pricePerNight: 249,
+    totalAmount: 747,
+    status: 'confirmed',
+    paymentStatus: 'paid',
+    specialRequests: 'bootstrap-demo-booking-upcoming'
+  });
+
+  return {
+    adminEmail: adminUser.email,
+    userEmail: demoUser.email,
+    rooms: roomDocs.length
+  };
 }
 
-seed();
+module.exports = { bootstrapData };
