@@ -7,9 +7,21 @@ const path = require('path');
 dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 5000;
+const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:3000';
+
+if (!process.env.MONGO_URI) {
+  console.error('Missing required environment variable: MONGO_URI');
+  process.exit(1);
+}
+
+if (!process.env.JWT_SECRET) {
+  console.error('Missing required environment variable: JWT_SECRET');
+  process.exit(1);
+}
 
 // Middleware
-app.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+app.use(cors({ origin: CORS_ORIGIN, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -29,12 +41,13 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Internal Server Error', error: err.message });
 });
 
-const PORT = process.env.PORT || 5000;
-
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-    console.log('✅ MongoDB connected');
-    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+    console.log('MongoDB connected');
+    app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
   })
-  .catch(err => console.error('❌ MongoDB connection error:', err));
+  .catch(err => {
+    console.error('MongoDB connection error:', err.message);
+    process.exit(1);
+  });
