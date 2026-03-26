@@ -40,6 +40,13 @@ app.get('/', (req, res) => {
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'OK', message: 'Hotel API running' }));
 
+app.use((req, res) => {
+  res.status(404).json({
+    message: 'Page not found',
+    path: req.originalUrl,
+  });
+});
+
 // Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
