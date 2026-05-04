@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const bookingSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // admin who created booking (optional)
   room: { type: mongoose.Schema.Types.ObjectId, ref: 'Room', required: true },
   checkIn: { type: Date, required: true },
   checkOut: { type: Date, required: true },
@@ -13,6 +14,18 @@ const bookingSchema = new mongoose.Schema({
   paymentStatus: { type: String, enum: ['pending', 'paid', 'refunded'], default: 'paid' },
   paymentMethod: { type: String, default: 'card' },
   specialRequests: { type: String, default: '' },
+  guestInfo: {
+    name: { type: String, default: '' },
+    email: { type: String, default: '' },
+    phone: { type: String, default: '' },
+  },
+  documents: {
+    aadhaarFront: { type: String, default: '' },
+    aadhaarBack: { type: String, default: '' },
+    cardFront: { type: String, default: '' },
+    cardBack: { type: String, default: '' },
+    documentImage: { type: String, default: '' },
+  },
   bookingRef: { type: String, unique: true },
   createdAt: { type: Date, default: Date.now }
 });
