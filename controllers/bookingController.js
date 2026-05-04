@@ -36,7 +36,7 @@ const saveBase64Image = async (dataUrl, subdir, filenameBase) => {
 // Create a booking (with conflict check)
 exports.createBooking = async (req, res) => {
   try {
-    const { roomId, checkIn, checkOut, guests, specialRequests, paymentMethod, documents } = req.body;
+    const { roomId, checkIn, checkOut, guests, specialRequests, paymentMethod, documents, guestInfo } = req.body;
     if (!documents?.documentImage) {
       return res.status(400).json({ message: 'Upload Aadhaar or PAN card before booking' });
     }
@@ -66,6 +66,11 @@ exports.createBooking = async (req, res) => {
       user: req.user._id, room: roomId, checkIn: ci, checkOut: co,
       guests, totalNights, pricePerNight: room.price, totalAmount,
       specialRequests, paymentMethod, status: 'confirmed', paymentStatus: 'paid',
+      guestInfo: {
+        name: guestInfo?.name || req.user.name || '',
+        email: guestInfo?.email || req.user.email || '',
+        phone: guestInfo?.phone || req.user.phone || '',
+      },
       documents: { documentImage: savedDocImage }
     });
 

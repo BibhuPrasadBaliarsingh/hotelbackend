@@ -9,8 +9,18 @@ const reviewSchema = new mongoose.Schema({
 });
 
 const roomSchema = new mongoose.Schema({
+  roomNumber: { type: Number, unique: true, sparse: true },
   name: { type: String, required: true, trim: true },
-  type: { type: String, enum: ['Single', 'Double', 'Deluxe', 'Suite'], required: true },
+  type: {
+    type: String,
+    enum: [
+      'Single', 'Double', 'Standard', 'Deluxe', 'Suite',
+      'Deluxe Family', 'Connecting Room', 'Family Room',
+      'Mini Suite', 'Executive Suite', 'Deluxe Balcony',
+      'Luxury Deluxe', 'Premium Suite', 'Presidential Suite'
+    ],
+    required: true
+  },
   price: { type: Number, required: true, min: 0 },
   description: { type: String, required: true },
   images: [{ type: String }],

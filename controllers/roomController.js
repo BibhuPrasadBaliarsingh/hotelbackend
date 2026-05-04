@@ -10,7 +10,7 @@ exports.getRooms = async (req, res) => {
     if (minPrice || maxPrice) { filter.price = {}; if (minPrice) filter.price.$gte = Number(minPrice); if (maxPrice) filter.price.$lte = Number(maxPrice); }
     if (available === 'true') filter.isAvailable = true;
 
-    let rooms = await Room.find(filter).sort({ createdAt: -1 });
+    let rooms = await Room.find(filter).sort({ floor: 1, roomNumber: 1, createdAt: -1 });
 
     // Check date conflicts
     if (checkIn && checkOut) {
