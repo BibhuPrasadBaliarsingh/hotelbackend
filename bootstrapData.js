@@ -185,6 +185,22 @@ async function bootstrapData() {
     phone: '+1 555-1234'
   });
 
+  await ensureUser({
+    name: 'Reception Team',
+    email: 'reception@hotel.com',
+    password: 'recept123',
+    role: 'reception',
+    phone: '+1 555-2000'
+  });
+
+  await ensureUser({
+    name: 'Management Lead',
+    email: 'manager@hotel.com',
+    password: 'manage123',
+    role: 'management',
+    phone: '+1 555-3000'
+  });
+
   const roomDocs = [];
   for (const room of rooms) {
     roomDocs.push(await ensureRoom(room));

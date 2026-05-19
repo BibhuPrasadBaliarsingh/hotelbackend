@@ -154,7 +154,23 @@ async function seed() {
       phone: '+1 555-1234'
     });
 
-    console.log(`Users ready. Created: ${Number(adminResult.created) + Number(userResult.created)}`);
+    const receptionResult = await ensureUser({
+      name: 'Reception Team',
+      email: 'reception@hotel.com',
+      password: 'recept123',
+      role: 'reception',
+      phone: '+1 555-2000'
+    });
+
+    const managementResult = await ensureUser({
+      name: 'Management Lead',
+      email: 'manager@hotel.com',
+      password: 'manage123',
+      role: 'management',
+      phone: '+1 555-3000'
+    });
+
+    console.log(`Users ready. Created: ${Number(adminResult.created) + Number(userResult.created) + Number(receptionResult.created) + Number(managementResult.created)}`);
 
     const roomResults = await Promise.all(rooms.map(ensureRoom));
     const createdRooms = roomResults.map(result => result.room);
@@ -205,6 +221,8 @@ async function seed() {
     console.log('\nSeed complete.\n');
     console.log('Admin: admin@hotel.com | Password: admin123');
     console.log('User:  user@hotel.com  | Password: user123');
+    console.log('Reception: reception@hotel.com | Password: recept123');
+    console.log('Management: manager@hotel.com | Password: manage123');
     console.log(`Mode: ${shouldReset ? 'reset' : 'safe'}`);
   } catch (err) {
     console.error('Seed error:', err.message);
