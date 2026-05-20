@@ -37,7 +37,8 @@ const saveBase64Image = async (dataUrl, subdir, filenameBase) => {
 // Create a booking (with conflict check)
 exports.createBooking = async (req, res) => {
   try {
-    const { roomId, checkIn, checkOut, guests, specialRequests, paymentMethod, paymentStatus = 'paid', customAmount, assignedRoomNumber, checkInTime, checkOutTime, referId, aadhaarNumber, receptionNotes, documents, guestInfo } = req.body;
+    const { roomId, quantity = 1, checkIn, checkOut, guests, specialRequests, paymentMethod, paymentStatus = 'paid', customAmount, assignedRoomNumber, checkInTime, checkOutTime, referId, aadhaarNumber, receptionNotes, documents, guestInfo } = req.body;
+    const qty = Math.max(1, Number(quantity) || 1);
     if (!documents?.documentImage) {
       return res.status(400).json({ message: 'Upload Aadhaar or PAN card before booking' });
     }
@@ -57,7 +58,11 @@ exports.createBooking = async (req, res) => {
     const totalNights = Math.ceil((co - ci) / (1000 * 60 * 60 * 24));
     if (totalNights < 1) return res.status(400).json({ message: 'Check-out must be after check-in' });
 
-    const totalAmount = Number(customAmount) > 0 ? Number(customAmount) : totalNights * room.price;
+    // Only allow admin to set a custom amount/estimate. Regular users pay calculated total.
+    const isAdmin = req.user && req.user.role === 'admin';
+    const providedCustom = Number(customAmount) > 0 ? Number(customAmount) : 0;
+    const effectiveCustom = isAdmin && providedCustom > 0 ? providedCustom : 0;
+    const totalAmount = effectiveCustom > 0 ? effectiveCustom : totalNights * room.price * qty;
     const docSubdir = 'booking-docs';
     const savedDocImage = await saveBase64Image(documents.documentImage, docSubdir, `${req.user.email || req.user._id}-document`);
     if (!savedDocImage) {
@@ -72,10 +77,11 @@ exports.createBooking = async (req, res) => {
       checkInTime: checkInTime || '',
       checkOutTime: checkOutTime || '',
       guests,
+      quantity: qty,
       totalNights,
       pricePerNight: room.price,
       totalAmount,
-      customAmount: Number(customAmount) || 0,
+      customAmount: isAdmin ? (Number(customAmount) || 0) : 0,
       paymentMethod,
       paymentStatus,
       status: paymentStatus === 'due' ? 'pending' : 'confirmed',
@@ -104,6 +110,7 @@ exports.adminCreateBooking = async (req, res) => {
   try {
     const {
       roomId,
+      roomIds,
       checkIn,
       checkOut,
       checkInTime,
@@ -139,9 +146,24 @@ exports.adminCreateBooking = async (req, res) => {
       user = await User.create({ name: guestName, email, phone: guestPhone, password: guestPassword, role: 'user', referId: referId || '', aadhaarNumber: aadhaarNumber || '' });
     }
 
-    const room = await Room.findById(roomId);
-    if (!room) return res.status(404).json({ message: 'Room not found' });
-    if (!room.isAvailable) return res.status(400).json({ message: 'Room is not available' });
+    const requestedRoomIds = Array.isArray(roomIds) && roomIds.length > 0 ? roomIds : [roomId];
+    if (!requestedRoomIds.length) return res.status(400).json({ message: 'Select at least one room' });
+
+    const roomsToBook = await Room.find({ _id: { $in: requestedRoomIds } });
+    if (roomsToBook.length !== requestedRoomIds.length) {
+      return res.status(404).json({ message: 'One or more selected rooms were not found' });
+    }
+
+    const ci = new Date(checkIn), co = new Date(checkOut);
+    const totalNights = Math.ceil((co - ci) / (1000 * 60 * 60 * 24));
+    if (totalNights < 1) return res.status(400).json({ message: 'Check-out must be after check-in' });
+
+    const conflicts = await Booking.findOne({
+      room: { $in: requestedRoomIds },
+      status: { $in: ['confirmed', 'pending'] },
+      $or: [{ checkIn: { $lt: co }, checkOut: { $gt: ci } }]
+    });
+    if (conflicts) return res.status(400).json({ message: `Room ${conflicts.room} is already booked for these dates` });
 
     const conflict = await Booking.findOne({
       room: roomId,
@@ -150,52 +172,55 @@ exports.adminCreateBooking = async (req, res) => {
     });
     if (conflict) return res.status(400).json({ message: 'Room is already booked for these dates' });
 
-    const ci = new Date(checkIn), co = new Date(checkOut);
-    const totalNights = Math.ceil((co - ci) / (1000 * 60 * 60 * 24));
-    if (totalNights < 1) return res.status(400).json({ message: 'Check-out must be after check-in' });
-
-    const calculatedAmount = Number(customAmount) > 0 ? Number(customAmount) : totalNights * room.price;
-    const docSubdir = 'booking-docs';
-    const savedDocs = {
-      aadhaarFront: await saveBase64Image(documents?.aadhaarFront, docSubdir, `${email}-aadhaar-front`),
-      aadhaarBack: await saveBase64Image(documents?.aadhaarBack, docSubdir, `${email}-aadhaar-back`),
-      cardFront: await saveBase64Image(documents?.cardFront, docSubdir, `${email}-card-front`),
-      cardBack: await saveBase64Image(documents?.cardBack, docSubdir, `${email}-card-back`),
-      idProof: await saveBase64Image(documents?.idProof, docSubdir, `${email}-idproof`),
-      paymentSlip: await saveBase64Image(documents?.paymentSlip, docSubdir, `${email}-payment-slip`),
+    const calculatedDocs = {
+      aadhaarFront: await saveBase64Image(documents?.aadhaarFront, 'booking-docs', `${email}-aadhaar-front`),
+      aadhaarBack: await saveBase64Image(documents?.aadhaarBack, 'booking-docs', `${email}-aadhaar-back`),
+      cardFront: await saveBase64Image(documents?.cardFront, 'booking-docs', `${email}-card-front`),
+      cardBack: await saveBase64Image(documents?.cardBack, 'booking-docs', `${email}-card-back`),
+      idProof: await saveBase64Image(documents?.idProof, 'booking-docs', `${email}-idproof`),
+      paymentSlip: await saveBase64Image(documents?.paymentSlip, 'booking-docs', `${email}-payment-slip`),
     };
 
-    const booking = await Booking.create({
-      user: user._id,
-      createdBy: req.user._id,
-      room: roomId,
-      roomNumber: assignedRoomNumber || '',
-      checkIn: ci,
-      checkOut: co,
-      checkInTime: checkInTime || '',
-      checkOutTime: checkOutTime || '',
-      guests,
-      totalNights,
-      pricePerNight: room.price,
-      totalAmount: calculatedAmount,
-      customAmount: Number(customAmount) || 0,
-      paymentMethod,
-      paymentStatus,
-      status: paymentStatus === 'due' ? 'pending' : 'confirmed',
-      referId: referId || '',
-      aadhaarNumber: aadhaarNumber || '',
-      assignedRoomNumber: assignedRoomNumber || '',
-      receptionNotes: receptionNotes || '',
-      specialRequests,
-      guestInfo: { name: guestName, email, phone: guestPhone },
-      documents: savedDocs
-    });
+    const createdBookings = [];
+    for (const room of roomsToBook) {
+      if (!room.isAvailable) {
+        return res.status(400).json({ message: `Room ${room.name} is not available` });
+      }
+      const amount = Number(customAmount) > 0 ? Number(customAmount) : totalNights * room.price;
+      const booking = await Booking.create({
+        user: user._id,
+        createdBy: req.user._id,
+        room: room._id,
+        roomNumber: assignedRoomNumber || room.roomNumber || '',
+        checkIn: ci,
+        checkOut: co,
+        checkInTime: checkInTime || '',
+        checkOutTime: checkOutTime || '',
+        guests,
+        quantity: 1,
+        totalNights,
+        pricePerNight: room.price,
+        totalAmount: amount,
+        customAmount: Number(customAmount) || 0,
+        paymentMethod,
+        paymentStatus,
+        status: paymentStatus === 'due' ? 'pending' : 'confirmed',
+        referId: referId || '',
+        aadhaarNumber: aadhaarNumber || '',
+        assignedRoomNumber: assignedRoomNumber || room.roomNumber || '',
+        receptionNotes: receptionNotes || '',
+        specialRequests,
+        guestInfo: { name: guestName, email: guestEmail, phone: guestPhone },
+        documents: calculatedDocs
+      });
+      await booking.populate(['room', { path: 'user', select: 'name email phone' }, { path: 'createdBy', select: 'name email' }]);
+      createdBookings.push(booking);
+    }
 
-    await booking.populate(['room', { path: 'user', select: 'name email phone' }, { path: 'createdBy', select: 'name email' }]);
     res.status(201).json({
-      booking,
+      bookings: createdBookings,
       userWasCreated,
-      message: 'Admin booking created successfully'
+      message: 'Admin booking(s) created successfully'
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -260,8 +285,9 @@ exports.getBookingDocuments = async (req, res) => {
       ];
     }
     const bookings = await Booking.find(query)
-      .select('bookingRef guestInfo referId aadhaarNumber documents room createdAt')
-      .populate('room', 'name type');
+      .select('bookingRef guestInfo referId aadhaarNumber documents room createdAt checkIn checkOut')
+      .populate('room', 'name type')
+      .populate('user', 'name email phone');
     res.json({ bookings, count: bookings.length });
   } catch (err) {
     res.status(500).json({ message: err.message });

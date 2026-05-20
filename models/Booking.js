@@ -11,6 +11,7 @@ const bookingSchema = new mongoose.Schema({
   checkOutTime: { type: String, default: '' },
   guests: { adults: { type: Number, default: 1 }, children: { type: Number, default: 0 } },
   totalNights: { type: Number, required: true },
+  quantity: { type: Number, default: 1 },
   pricePerNight: { type: Number, required: true },
   totalAmount: { type: Number, required: true },
   customAmount: { type: Number, default: 0 },
